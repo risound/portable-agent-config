@@ -1,0 +1,4 @@
+interface:
+  display_name: "Resume Tailoring"
+  short_description: "Tailor a resume to a job posting without ATS or AI-writing penalties"
+  default_prompt: "Use $resume-tailoring to tailor my resume to this job posting."

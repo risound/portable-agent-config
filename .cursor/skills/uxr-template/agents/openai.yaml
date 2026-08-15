@@ -1,0 +1,4 @@
+interface:
+  display_name: "UXR Template"
+  short_description: "Turn rough research drafts into stakeholder-ready deliverables"
+  default_prompt: "Use $uxr-template to turn my rough draft into a polished findings report."

@@ -5,12 +5,17 @@
     "project": [
       "instructions/project.md"
     ],
-    "user": []
+    "user": [
+      "instructions/user.md"
+    ]
   },
   "skills": [
+    "consulting-ux-review",
     "portable-agent-sync",
+    "resume-tailoring",
     "tasklist",
-    "uxr-interview-prep"
+    "uxr-interview-prep",
+    "uxr-template"
   ],
   "agents": [
     "api-prober",

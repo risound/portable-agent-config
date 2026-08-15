@@ -1,0 +1,4 @@
+interface:
+  display_name: "Consulting UX Review"
+  short_description: "Run a client UX review from scoping to deliverable"
+  default_prompt: "Use $consulting-ux-review to review my client's site and draft the findings deliverable."

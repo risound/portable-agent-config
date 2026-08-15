@@ -41,10 +41,21 @@ test("keeps project rules scoped, preserves task data, and backs up authorized s
     assert.ok(existsSync(path.join(home, ".agents", "skills", "portable-agent-sync", "SKILL.md")));
     assert.ok(existsSync(path.join(home, ".claude", "agents", "api-prober.md")));
     assert.ok(existsSync(path.join(home, ".gemini", "agents", "tone-auditor.md")));
-    assert.equal(existsSync(path.join(home, ".claude", "CLAUDE.md")), false);
-    assert.equal(existsSync(path.join(home, ".codex", "AGENTS.md")), false);
-    assert.equal(existsSync(path.join(home, ".gemini", "GEMINI.md")), false);
     assert.equal(readFileSync(taskData, "utf8"), "# Existing task data\n");
+
+    // User-wide instructions carry the user layer only. Repository maintenance
+    // rules stay project-scoped and must never reach a user configuration file.
+    for (const userInstruction of [
+      path.join(home, ".claude", "CLAUDE.md"),
+      path.join(home, ".codex", "AGENTS.md"),
+      path.join(home, ".gemini", "GEMINI.md"),
+    ]) {
+      assert.ok(existsSync(userInstruction), `missing ${userInstruction}`);
+      const text = readFileSync(userInstruction, "utf8");
+      assert.match(text, /Working agreements/);
+      assert.doesNotMatch(text, /Do not edit generated/);
+      assert.doesNotMatch(text, /Increment 2 boundary/);
+    }
 
     const backupRoot = path.join(home, ".portable-agent-config", "backups");
     const backup = path.join(backupRoot, readdirSync(backupRoot)[0], ".claude", "skills", "tasklist", "SKILL.md");
