@@ -39,7 +39,7 @@ function digestTree(root) {
   return hash.digest("hex");
 }
 
-test("generates and checks all Increment 1 targets deterministically", () => {
+test("generates and checks all configured targets deterministically", () => {
   const output = mkdtempSync(path.join(tmpdir(), "portable-agent-output-"));
   try {
     const first = run("generate", output);
@@ -49,12 +49,16 @@ test("generates and checks all Increment 1 targets deterministically", () => {
       "AGENTS.md",
       "CLAUDE.md",
       "GEMINI.md",
+      ".agents/skills/portable-agent-sync/SKILL.md",
+      ".agents/skills/portable-agent-sync/scripts/sync.mjs",
       ".agents/skills/tasklist/SKILL.md",
       ".claude/agents/tone-auditor.md",
       ".claude/skills/tasklist/SKILL.md",
+      ".claude/skills/portable-agent-sync/SKILL.md",
       ".codex/agents/tone-auditor.toml",
       ".cursor/agents/tone-auditor.md",
       ".cursor/skills/tasklist/SKILL.md",
+      ".cursor/skills/portable-agent-sync/SKILL.md",
       ".gemini/agents/tone-auditor.md"
     ];
     for (const relative of required) {

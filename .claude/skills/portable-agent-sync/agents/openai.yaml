@@ -1,0 +1,4 @@
+interface:
+  display_name: "Portable Agent Sync"
+  short_description: "Install and update portable agent configuration"
+  default_prompt: "Use $portable-agent-sync to safely sync my portable agent configuration on this machine."

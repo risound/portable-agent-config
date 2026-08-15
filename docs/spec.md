@@ -42,6 +42,16 @@ The initial implementation should evaluate Rulesync as the adapter engine before
 - Full Windows support beyond documenting copy mode instead of symlinks.
 - Exact translation of vendor-only hooks, permission syntax, dynamic prompt expressions, or model-specific settings.
 
+## Increment 2: machine sync skill
+
+- Add `portable-agent-sync` as a canonical Agent Skill with a deterministic bundled installer.
+- Preview user-level destinations before writing and require explicit `--apply` authorization.
+- Install only manifest-listed artifacts; never delete unrelated host configuration.
+- Refuse conflicts by default. Permit replacement only with separate authorization and recoverable backups.
+- Use the shared user Agent Skills directory for Codex and Gemini, and native instruction and agent locations for each supported host.
+- Pull updates with `git pull --ff-only` only from a clean checkout, then regenerate and validate before refreshing installed artifacts.
+- Report that Cursor rules remain project-scoped because the current adapter cannot install them globally.
+
 ## External dependencies
 
 - Git and a private Git remote (GitHub is convenient but not required).

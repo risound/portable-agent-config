@@ -5,6 +5,7 @@
     "instructions/global.md"
   ],
   "skills": [
+    "portable-agent-sync",
     "tasklist"
   ],
   "agents": [

@@ -20,6 +20,6 @@ Use this repository as the canonical source for portable instructions, Agent Ski
 - Rulesync generates Claude Code, Codex, and Cursor files.
 - `scripts/portable-agent-config.mjs` supplies the missing Gemini CLI adapter and validation layer.
 
-## Increment 1 boundary
+## Increment 2 boundary
 
-Support one instruction document, the `tasklist` skill, and the read-only `tone-auditor` agent across Claude Code, Codex, Gemini CLI, and Cursor. Do not add global installation, cloud sync, MCP credentials, or additional profiles until this slice is verified.
+Support the verified Increment 1 content plus a preview-first `portable-agent-sync` skill for user-level installation and Git fast-forward updates. Never delete unrelated host configuration, replace conflicts without separate authorization and backups, or commit credentials and machine-local state. Keep hosted UI, MCP credentials, and additional profiles deferred.
