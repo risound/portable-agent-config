@@ -4,7 +4,7 @@ description: Safely install, inspect, and update this Git-backed portable agent 
 ---
 # Portable Agent Sync
 
-Use the bundled `scripts/sync.mjs` command to synchronize only the instructions, skills, and agents declared by `portable-agent.config.json`.
+Use the bundled `scripts/sync.mjs` command to synchronize only the user-scoped instructions, skills, and agents declared by `portable-agent.config.json`. Repository-scoped instructions remain in the checkout.
 
 ## Locate the repository
 
@@ -77,7 +77,7 @@ Update uses a fast-forward-only pull, installs locked dependencies, regenerates 
 
 - Codex and Gemini share user skills through `~/.agents/skills`.
 - Claude Code and Cursor receive their native skill and agent directories.
-- Codex, Claude Code, and Gemini receive native global instruction files.
+- Codex, Claude Code, and Gemini receive native global instruction files only when `instructions.user` is non-empty. Never install `instructions.project` into a user home.
 - Cursor global rules are not file-installable through the current adapter, so preserve Cursor user rules and report this limitation.
 
 After installation, tell the user which artifacts changed, where backups were written, and which host reload or restart is needed.

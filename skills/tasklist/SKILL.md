@@ -17,6 +17,8 @@ Resolve `tasklist_root` in this order:
 
 Ask before creating persistent files when no location is already configured. Never invent a path or assume a Claude-, Codex-, Gemini-, or Cursor-specific directory is portable.
 
+When migrating from an existing tracker, reuse the directory containing the user’s current daily files if the user or host configuration identifies it. Do not move, rename, or delete task data as part of skill installation; changing the skill definition and migrating task data are separate operations.
+
 Store daily files as `YYYY-MM-DD.md` and rollups under `rollups/`.
 
 ## Daily format
@@ -102,4 +104,5 @@ Write only when the user requests persistence or accepts an offered automatic ro
 - Modify only the relevant task blocks and recalculated counts.
 - Preserve newline style and unrelated content.
 - Never write outside `tasklist_root`.
+- Treat an existing host-specific task directory as valid machine-local configuration, not canonical skill content.
 - After a write, report the file, operation, and resulting counts.

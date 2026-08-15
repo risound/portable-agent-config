@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "name": "quote-verifier",
+  "description": "Verify every participant quote in a draft against source transcripts and report wording, attribution, splicing, and context problems without editing the draft.",
+  "prompt": "PROMPT.md",
+  "capabilities": ["read", "search"],
+  "readOnly": true,
+  "modelClass": "inherit",
+  "maxTurns": 18,
+  "adapterLosses": {
+    "codexcli": ["capabilities", "readOnly", "modelClass", "maxTurns"],
+    "cursor": ["capabilities", "maxTurns"],
+    "gemini-cli": ["modelClass"]
+  }
+}

@@ -52,7 +52,13 @@ test("generates and checks all configured targets deterministically", () => {
       ".agents/skills/portable-agent-sync/SKILL.md",
       ".agents/skills/portable-agent-sync/scripts/sync.mjs",
       ".agents/skills/tasklist/SKILL.md",
+      ".agents/skills/uxr-interview-prep/SKILL.md",
+      ".agents/skills/uxr-interview-prep/references/question-bank.md",
+      ".claude/agents/api-prober.md",
+      ".claude/agents/quote-verifier.md",
+      ".claude/agents/research-scout.md",
       ".claude/agents/tone-auditor.md",
+      ".claude/agents/transcript-coder.md",
       ".claude/skills/tasklist/SKILL.md",
       ".claude/skills/portable-agent-sync/SKILL.md",
       ".codex/agents/tone-auditor.toml",
@@ -76,6 +82,10 @@ test("generates and checks all configured targets deterministically", () => {
     const doctor = run("doctor", output);
     assert.equal(doctor.status, 0, doctor.stderr);
     assert.match(doctor.stdout, /Declared adapter loss: tone-auditor -> codexcli: capabilities, readOnly, modelClass, maxTurns/);
+
+    for (const relative of filesUnder(output)) {
+      assert.doesNotMatch(readFileSync(path.join(output, relative), "utf8"), /\/Users\//, `${relative} contains a machine-specific path`);
+    }
 
     writeFileSync(path.join(output, "GEMINI.md"), "stale\n");
     const stale = run("check", output);

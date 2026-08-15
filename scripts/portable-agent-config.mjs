@@ -66,7 +66,9 @@ function loadManifest() {
   const manifest = readJson(MANIFEST_PATH);
   ensure(manifest.schemaVersion === 1, "portable-agent.config.json: unsupported schemaVersion");
   ensure(manifest.rulesyncVersion === "16.12.0", "Manifest and package.json must pin Rulesync 16.12.0");
-  ensure(Array.isArray(manifest.instructions) && manifest.instructions.length > 0, "At least one instruction source is required");
+  ensure(manifest.instructions && typeof manifest.instructions === "object", "instructions must be an object");
+  ensure(Array.isArray(manifest.instructions.project) && manifest.instructions.project.length > 0, "At least one project instruction source is required");
+  ensure(Array.isArray(manifest.instructions.user), "instructions.user must be an array");
   ensure(Array.isArray(manifest.skills), "skills must be an array");
   ensure(Array.isArray(manifest.agents), "agents must be an array");
   ensure(Array.isArray(manifest.targets), "targets must be an array");
@@ -92,7 +94,7 @@ function validateCanonicalSources(manifest) {
     }
   }
 
-  for (const relative of manifest.instructions) {
+  for (const relative of [...manifest.instructions.project, ...manifest.instructions.user]) {
     ensure(existsSync(path.join(REPO_ROOT, relative)), `Missing instruction source: ${relative}`);
   }
 
@@ -174,7 +176,7 @@ function buildRulesyncStage(manifest) {
   mkdirSync(path.join(sourceRoot, "subagents"), { recursive: true });
   cpSync(RULESYNC_CONFIG, path.join(stage, "rulesync.jsonc"));
 
-  const combinedInstructions = manifest.instructions
+  const combinedInstructions = manifest.instructions.project
     .map((relative) => renderRulesyncRule(relative))
     .join("\n");
   writeFileSync(path.join(sourceRoot, "rules", "overview.md"), combinedInstructions);
@@ -218,7 +220,7 @@ function runRulesync(stage, command, outputRoot) {
 }
 
 function expectedGeminiFiles(manifest) {
-  const instructionBody = manifest.instructions
+  const instructionBody = manifest.instructions.project
     .map((relative) => normalizeNewline(readFileSync(path.join(REPO_ROOT, relative), "utf8")))
     .join("\n");
   const files = new Map([["GEMINI.md", `${GENERATED_HEADER}\n\n${instructionBody}`]]);
@@ -267,6 +269,39 @@ function writeOrCheckGemini(manifest, outputRoot, check) {
   ensure(differences.length === 0, `Gemini outputs are stale: ${differences.join(", ")}`);
 }
 
+function expectedUserInstructionFiles(manifest) {
+  if (manifest.instructions.user.length === 0) return new Map();
+  const body = manifest.instructions.user
+    .map((relative) => normalizeNewline(readFileSync(path.join(REPO_ROOT, relative), "utf8")))
+    .join("\n");
+  const content = `${GENERATED_HEADER}\n\n${body}`;
+  return new Map([
+    [path.join(".portable", "user", "claudecode", "CLAUDE.md"), content],
+    [path.join(".portable", "user", "codexcli", "AGENTS.md"), content],
+    [path.join(".portable", "user", "gemini-cli", "GEMINI.md"), content],
+  ]);
+}
+
+function writeOrCheckUserInstructions(manifest, outputRoot, check) {
+  const userRoot = path.join(outputRoot, ".portable", "user");
+  const expected = expectedUserInstructionFiles(manifest);
+  if (!check) rmSync(userRoot, { recursive: true, force: true });
+
+  const differences = [];
+  for (const [relative, content] of expected) {
+    const destination = path.join(outputRoot, relative);
+    if (check) {
+      if (!existsSync(destination) || readFileSync(destination, "utf8") !== content) differences.push(relative);
+    } else {
+      mkdirSync(path.dirname(destination), { recursive: true });
+      writeFileSync(destination, content);
+      process.stdout.write(`generated ${relative}\n`);
+    }
+  }
+  if (check && expected.size === 0 && walkFiles(userRoot).length > 0) differences.push(path.relative(outputRoot, userRoot));
+  ensure(differences.length === 0, `User instruction outputs are stale: ${differences.join(", ")}`);
+}
+
 function parseCli(argv) {
   const command = argv[2];
   ensure(["generate", "check", "doctor"].includes(command), "Usage: portable-agent-config.mjs <generate|check|doctor> [--output PATH]");
@@ -301,6 +336,7 @@ export function main(argv = process.argv) {
       mkdirSync(outputRoot, { recursive: true });
       runRulesync(stage, "generate", outputRoot);
       writeOrCheckGemini(manifest, outputRoot, false);
+      writeOrCheckUserInstructions(manifest, outputRoot, false);
       return;
     }
 
@@ -318,6 +354,7 @@ export function main(argv = process.argv) {
     if (result.stderr) process.stderr.write(result.stderr);
     ensure(result.status === 0, "Rulesync outputs are stale");
     writeOrCheckGemini(manifest, outputRoot, true);
+    writeOrCheckUserInstructions(manifest, outputRoot, true);
     process.stdout.write("All generated outputs are current.\n");
   } finally {
     rmSync(stage, { recursive: true, force: true });

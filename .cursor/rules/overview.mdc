@@ -21,12 +21,13 @@ Use this repository as the canonical source for portable instructions, Agent Ski
 
 ## Architecture
 
-- `instructions/` contains always-on guidance.
+- `instructions/project.md` contains rules for working in this repository.
+- `instructions.user` in the manifest lists optional user-wide guidance. It is empty unless guidance truly applies to every project.
 - `skills/` contains open-standard, progressively disclosed workflows.
 - `agents/` contains portable agent metadata and prompts.
-- Rulesync generates Claude Code, Codex, and Cursor files.
-- `scripts/portable-agent-config.mjs` supplies the missing Gemini CLI adapter and validation layer.
+- Rulesync generates Claude Code, Codex, and Cursor project files.
+- `scripts/portable-agent-config.mjs` supplies the Gemini CLI adapter, user-instruction artifacts, and validation layer.
 
 ## Increment 2 boundary
 
-Support the verified Increment 1 content plus a preview-first `portable-agent-sync` skill for user-level installation and Git fast-forward updates. Never delete unrelated host configuration, replace conflicts without separate authorization and backups, or commit credentials and machine-local state. Keep hosted UI, MCP credentials, and additional profiles deferred.
+Support portable skills and self-contained agents plus a preview-first `portable-agent-sync` skill for user-level installation. Never install repository maintenance rules as user-wide instructions, delete unrelated host configuration, replace conflicts without separate authorization and backups, or commit credentials and machine-local state. Keep hosted UI, MCP credentials, and additional profiles deferred.

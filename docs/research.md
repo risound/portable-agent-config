@@ -152,7 +152,8 @@ portable-agent-config/
 ├── AGENTS.md                    # instructions for this repository
 ├── config.yaml                  # targets, profiles, install mode
 ├── instructions/
-│   ├── global.md                # canonical personal defaults
+│   ├── project.md               # rules for this repository
+│   └── user.md                  # optional genuinely user-wide defaults
 │   └── fragments/               # optional reusable modules
 ├── skills/
 │   └── <skill>/

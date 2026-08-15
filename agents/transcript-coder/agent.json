@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "name": "transcript-coder",
+  "description": "Apply an approved codebook to one transcript and produce verbatim coded extracts, coverage, candidate codes, and gaps without changing the codebook.",
+  "prompt": "PROMPT.md",
+  "capabilities": ["read", "search", "write"],
+  "readOnly": false,
+  "modelClass": "inherit",
+  "maxTurns": 18,
+  "adapterLosses": {
+    "codexcli": ["capabilities", "readOnly", "modelClass", "maxTurns"],
+    "cursor": ["capabilities", "maxTurns"],
+    "gemini-cli": ["modelClass"]
+  }
+}

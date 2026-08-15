@@ -4,7 +4,7 @@ A private, Git-backed source of truth for personal agent instructions, Agent Ski
 
 The architecture is **open standards where possible, compile where necessary**:
 
-- Canonical always-on guidance lives under `instructions/`.
+- Project-scoped and user-scoped guidance are declared separately under `instructions` in the manifest.
 - Canonical Agent Skills live under `skills/` in the open `SKILL.md` format.
 - Canonical agents use a small JSON metadata contract plus a Markdown prompt under `agents/`.
 - Rulesync 16.12.0 generates Claude Code, Codex, and Cursor files.
@@ -45,5 +45,11 @@ npm run sync -- install --apply
 ```
 
 The installer links manifest-listed artifacts by default on macOS/Linux, copies them on Windows, preserves unrelated host configuration, and stops on conflicts. Replacing a conflict requires `--replace-conflicts` and creates a backup first.
+
+Repository maintenance rules come from `instructions.project` and generate only the checked-in project files. Only `instructions.user` can generate user-home instruction files; it is intentionally empty by default. This prevents the repository’s build workflow from leaking into every unrelated session.
+
+Replacing a legacy `tasklist` skill does not touch its task-data directory. Point the portable skill at that existing directory on each machine instead of committing a host-specific path.
+
+See [the migration audit](docs/migration-audit.md) before retiring older sync scripts or hook-dependent skills.
 
 On another machine, clone this private repository, run `npm ci`, and preview installation before applying it. Later updates can use `npm run sync -- update --apply`, which requires a clean checkout and a fast-forward-only Git pull.

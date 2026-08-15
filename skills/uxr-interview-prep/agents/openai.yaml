@@ -1,0 +1,4 @@
+interface:
+  display_name: "UXR Interview Prep"
+  short_description: "Practice senior UXR interviews with calibrated feedback"
+  default_prompt: "Use $uxr-interview-prep to run a realistic mock interview for my target role and company."

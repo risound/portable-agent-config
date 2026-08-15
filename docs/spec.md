@@ -20,7 +20,7 @@ The project will provide a Git-backed source of truth for instructions, Agent Sk
 
 Create a local prototype supporting Claude Code, Codex, Gemini CLI, and Cursor with:
 
-- One canonical baseline instruction document.
+- Separate canonical project and user instruction layers, with at least one project instruction document.
 - One valid Agent Skill bundle containing `SKILL.md` plus an optional reference or script.
 - One portable subagent definition using a documented, minimal JSON-plus-Markdown schema.
 - Target generation or installation into each harness's native paths.
@@ -75,3 +75,9 @@ The initial implementation should evaluate Rulesync as the adapter engine before
 - Keep skills canonical in the open `SKILL.md` format. Gemini consumes Rulesync's shared `.agents/skills/` output directly.
 - Commit project-scoped generated target files for cloud-agent compatibility.
 - Defer user-home installation, symlink versus copy behavior, and machine profiles until the project-scoped slice passes smoke tests in each harness.
+
+## Instruction scopes
+
+- `instructions.project` generates root `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, and project-scoped adapter output. These files explain how to work in this repository.
+- `instructions.user` generates dedicated artifacts under `.portable/user/<target>/` for installation into user configuration. An empty list means the sync tool installs no user-wide instruction file.
+- Project instructions must never be used as a fallback for an empty user layer.

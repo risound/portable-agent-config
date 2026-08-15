@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "name": "api-prober",
+  "description": "Probe a third-party API before integration work: verify authentication, required operations, response fields, pagination, and practical limits with minimal requests.",
+  "prompt": "PROMPT.md",
+  "capabilities": ["read", "search", "write", "shell", "web"],
+  "readOnly": false,
+  "modelClass": "inherit",
+  "maxTurns": 20,
+  "adapterLosses": {
+    "codexcli": ["capabilities", "readOnly", "modelClass", "maxTurns"],
+    "cursor": ["capabilities", "maxTurns"],
+    "gemini-cli": ["modelClass"]
+  }
+}

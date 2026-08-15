@@ -176,9 +176,11 @@ function buildArtifacts(repo, userHome, selectedTargets, manifest) {
     : path.join(userHome, ".codex");
   ensure(codexHome !== path.parse(codexHome).root, "Refusing to use a filesystem root as Codex home");
 
-  if (enabled("claudecode")) addArtifact(artifacts, path.join(repo, "CLAUDE.md"), path.join(userHome, ".claude", "CLAUDE.md"), "Claude instructions", ["claudecode"]);
-  if (enabled("codexcli")) addArtifact(artifacts, path.join(repo, "AGENTS.md"), path.join(codexHome, "AGENTS.md"), "Codex instructions", ["codexcli"]);
-  if (enabled("gemini-cli")) addArtifact(artifacts, path.join(repo, "GEMINI.md"), path.join(userHome, ".gemini", "GEMINI.md"), "Gemini instructions", ["gemini-cli"]);
+  if (manifest.instructions.user.length > 0) {
+    if (enabled("claudecode")) addArtifact(artifacts, path.join(repo, ".portable", "user", "claudecode", "CLAUDE.md"), path.join(userHome, ".claude", "CLAUDE.md"), "Claude user instructions", ["claudecode"]);
+    if (enabled("codexcli")) addArtifact(artifacts, path.join(repo, ".portable", "user", "codexcli", "AGENTS.md"), path.join(codexHome, "AGENTS.md"), "Codex user instructions", ["codexcli"]);
+    if (enabled("gemini-cli")) addArtifact(artifacts, path.join(repo, ".portable", "user", "gemini-cli", "GEMINI.md"), path.join(userHome, ".gemini", "GEMINI.md"), "Gemini user instructions", ["gemini-cli"]);
+  }
 
   for (const skill of manifest.skills) {
     const source = path.join(repo, "skills", skill);

@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "name": "research-scout",
+  "description": "Research a precise question with source-quality discipline and return a concise synthesis whose claims trace to dated, annotated sources.",
+  "prompt": "PROMPT.md",
+  "capabilities": ["read", "search", "write", "web"],
+  "readOnly": false,
+  "modelClass": "inherit",
+  "maxTurns": 24,
+  "adapterLosses": {
+    "codexcli": ["capabilities", "readOnly", "modelClass", "maxTurns"],
+    "cursor": ["capabilities", "maxTurns"],
+    "gemini-cli": ["modelClass"]
+  }
+}
