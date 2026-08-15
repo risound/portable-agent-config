@@ -22,7 +22,7 @@ Create a local prototype supporting Claude Code, Codex, Gemini CLI, and Cursor w
 
 - One canonical baseline instruction document.
 - One valid Agent Skill bundle containing `SKILL.md` plus an optional reference or script.
-- One portable subagent definition using a documented, minimal YAML-plus-Markdown schema.
+- One portable subagent definition using a documented, minimal JSON-plus-Markdown schema.
 - Target generation or installation into each harness's native paths.
 - A manifest declaring targets, profiles, and local overrides.
 - `generate`, `check`, and `doctor` commands or equivalent scripts.
@@ -58,9 +58,10 @@ The initial implementation should evaluate Rulesync as the adapter engine before
 - No secret, access token, absolute machine-specific path, or personal transcript is committed.
 - At least one smoke task per harness confirms that instructions load, the skill is discoverable, and the subagent can be selected or delegated to where supported.
 
-## Open decisions for implementation
+## Increment 1 implementation decisions
 
-- Adopt Rulesync wholesale, wrap it with a smaller personal manifest, or implement only the missing agent transforms.
-- Commit generated target files for cloud-agent compatibility, or generate them during setup and CI. The research recommendation is to commit project-scoped outputs and keep user-home outputs generated.
-- Use symlinks for user-scope installs on macOS/Linux, with copy mode as a cross-platform fallback.
-- Decide which machine profiles are needed (personal, consulting, restricted/work) before adding profile overlays.
+- Wrap pinned Rulesync 16.12.0 with a small personal manifest and validation layer.
+- Use Rulesync for Claude Code, Codex, and Cursor; use a narrow custom adapter for Gemini CLI instructions and agents because Rulesync does not currently target Gemini CLI.
+- Keep skills canonical in the open `SKILL.md` format. Gemini consumes Rulesync's shared `.agents/skills/` output directly.
+- Commit project-scoped generated target files for cloud-agent compatibility.
+- Defer user-home installation, symlink versus copy behavior, and machine profiles until the project-scoped slice passes smoke tests in each harness.

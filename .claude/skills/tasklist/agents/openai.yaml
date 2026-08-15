@@ -1,0 +1,4 @@
+interface:
+  display_name: "Tasklist"
+  short_description: "Maintain daily tasks and periodic rollups"
+  default_prompt: "Use $tasklist to show today’s tasks and carry forward open work."

@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "rulesyncVersion": "16.12.0",
+  "instructions": [
+    "instructions/global.md"
+  ],
+  "skills": [
+    "tasklist"
+  ],
+  "agents": [
+    "tone-auditor"
+  ],
+  "targets": [
+    "claudecode",
+    "codexcli",
+    "cursor",
+    "gemini-cli"
+  ]
+}

@@ -1,4 +1,8 @@
 work/
+node_modules/
+rulesync.local.jsonc
+config.local.json
+.DS_Store
 .env
 .env.*
 !.env.example

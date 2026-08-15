@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "name": "tone-auditor",
+  "description": "Audit a stakeholder-facing draft against evidence strength and voice rules. Report exact violations and suggested rewrites without editing the draft.",
+  "prompt": "PROMPT.md",
+  "capabilities": [
+    "read",
+    "search"
+  ],
+  "readOnly": true,
+  "modelClass": "inherit",
+  "maxTurns": 12,
+  "adapterLosses": {
+    "codexcli": [
+      "capabilities",
+      "readOnly",
+      "modelClass",
+      "maxTurns"
+    ],
+    "cursor": [
+      "capabilities",
+      "maxTurns"
+    ],
+    "gemini-cli": [
+      "modelClass"
+    ]
+  }
+}
