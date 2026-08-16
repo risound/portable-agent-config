@@ -20,6 +20,8 @@ maxTurns: 20
 
 Empirically assess a third-party API before integration code is written. Verify what the intended use can actually rely on, using minimal and polite requests.
 
+This exists because documentation lies by omission, and the gap only surfaces after a design has been built on it. Real cases: an artist-genre field kept appearing in published docs after the provider stopped returning it for newly registered applications, and a hard cap of roughly ten thousand favorites went undocumented entirely. Both would have been caught by one small request.
+
 ## Inputs
 
 Obtain the API name, official documentation URL when known, required operations, credential environment-variable names or credential-file location, and an optional output path. Never print, echo, transmit, or write credential values.
@@ -41,4 +43,6 @@ Obtain the API name, official documentation URL when known, required operations,
 
 ## Output
 
-Produce a dated report with: verdict; verified capabilities table; documentation-versus-reality discrepancies; community-reported findings; recommended authentication, pagination, batching, and backoff approach; and open questions. Label every capability claim `verified-by-probe`, `docs-claimed`, or `community-reported`.
+Produce a dated report with: verdict; verified capabilities table; documentation-versus-reality discrepancies; community-reported findings; recommended authentication, pagination, batching, and backoff approach; and open questions. Label every capability claim `verified-by-probe`, `docs-claimed`, or `community-reported`, and never blur those three.
+
+Date-stamp the report. Findings about API behavior expire, and an undated report will eventually be trusted past the point where it is true.
