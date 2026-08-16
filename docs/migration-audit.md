@@ -49,6 +49,12 @@ Making the skill fully self-contained requires deciding whether a scrubbed copy 
 
 **Gemini CLI and Cursor: not yet smoke tested.** Neither CLI is installed on this machine, so discovery has only been verified at the filesystem level.
 
+### Four targets are deliberate
+
+`~/.cursor` and `~/.gemini` did not exist before the installer first ran on 2026-08-14, and contain nothing it did not create. Cursor and the Gemini CLI are not installed here, while `~/.codex` and `~/.claude` both predate this project by months. Cursor and Gemini are therefore not yet in active use.
+
+Trimming the target list to `claudecode` and `codexcli` was considered on 2026-08-15 and **rejected**. Support is retained for all four: a target costs little while unused, and being ready for a harness before adopting it is the point of the project. Do not propose the trim again without new evidence.
+
 ### Confirmed consequence of the Codex adapter loss
 
 The declared loss is accurate and now empirically confirmed. A generated Codex agent file carries only `name`, `description`, and `developer_instructions`; it has no tool or turn restriction. A `readOnly` agent such as `quote-verifier` is therefore read-only **by instruction only** in Codex, not by enforcement. Gemini does enforce it, binding `tools` to `read_file` and `grep_search` plus a `max_turns` limit, and Claude Code binds an explicit tool list.
