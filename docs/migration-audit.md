@@ -37,6 +37,24 @@ The skill resolves its project doc and postcard templates at runtime instead of 
 
 Making the skill fully self-contained requires deciding whether a scrubbed copy of the templates should travel in this repository. That decision has not been made.
 
+## Verification, 2026-08-15
+
+**Fresh-machine path (passed).** Cloned the remote into an empty directory, ran `npm ci`, then `check`, `doctor`, and `test`, all green against the committed generated output. A `status` against an empty home reported 41 missing artifacts; `install --apply --mode copy` installed all 41; a second `status` reported 41 current. All four harness destinations were created, and the user instruction file was byte-identical across Claude, Codex, and Gemini with no project build rules present.
+
+**Codex (passed).** `codex exec` in a scratch directory, answering from loaded context only:
+
+- Instructions load. It quoted the em-dash rule from `instructions/user.md` verbatim.
+- Skills are discoverable. All six portable skills appeared by name, alongside `project-bootstrap` from the intentionally unmanaged copy.
+- Agents are selectable. All five appeared by name.
+
+**Gemini CLI and Cursor: not yet smoke tested.** Neither CLI is installed on this machine, so discovery has only been verified at the filesystem level.
+
+### Confirmed consequence of the Codex adapter loss
+
+The declared loss is accurate and now empirically confirmed. A generated Codex agent file carries only `name`, `description`, and `developer_instructions`; it has no tool or turn restriction. A `readOnly` agent such as `quote-verifier` is therefore read-only **by instruction only** in Codex, not by enforcement. Gemini does enforce it, binding `tools` to `read_file` and `grep_search` plus a `max_turns` limit, and Claude Code binds an explicit tool list.
+
+Treat Codex delegation to a read-only agent as advisory. Where the guarantee matters, prefer Claude Code or Gemini.
+
 ## Safe cutover
 
 1. Preview with `npm run sync -- install`.
