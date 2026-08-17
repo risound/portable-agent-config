@@ -37,6 +37,8 @@ The skill resolves its project doc and postcard templates at runtime instead of 
 
 Making the skill fully self-contained requires deciding whether a scrubbed copy of the templates should travel in this repository. That decision has not been made.
 
+An identifier-level scrub is done and lives in the workspace at `_TEMPLATES/research-artifacts/uxr-project-doc-template.scrubbed.md`, under version control there. It removes every company, product, vendor, and person name, the unreleased feature codename, the roadmap date, and three internal asset URLs, leaving structure and annotations intact. It is still not cleared to travel: the Insight and Next Steps examples remain real findings that could be re-identified from content alone. Replacing those with invented examples is the remaining work.
+
 ## Verification, 2026-08-15
 
 **Fresh-machine path (passed).** Cloned the remote into an empty directory, ran `npm ci`, then `check`, `doctor`, and `test`, all green against the committed generated output. A `status` against an empty home reported 41 missing artifacts; `install --apply --mode copy` installed all 41; a second `status` reported 41 current. All four harness destinations were created, and the user instruction file was byte-identical across Claude, Codex, and Gemini with no project build rules present.
