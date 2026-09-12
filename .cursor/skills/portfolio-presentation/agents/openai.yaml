@@ -1,0 +1,4 @@
+interface:
+  display_name: "Portfolio Presentation"
+  short_description: "Plan, gate, and debrief portfolio rounds and hiring manager calls"
+  default_prompt: "Use $portfolio-presentation to run intake for my next interview round."
