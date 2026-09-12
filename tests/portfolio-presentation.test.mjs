@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 import { splitFrontmatter } from "../skills/portfolio-presentation/scripts/lib/frontmatter.mjs";
 import { findRefs, stripRefs } from "../skills/portfolio-presentation/scripts/lib/refs.mjs";
 import { parseRegister } from "../skills/portfolio-presentation/scripts/lib/registers.mjs";
+import { lintDraft } from "../skills/portfolio-presentation/scripts/lib/lint.mjs";
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SKILL = path.join(REPO_ROOT, "skills", "portfolio-presentation");
@@ -79,4 +80,37 @@ test("parseRegister maps status symbols, accepts a bare warning sign, and report
   assert.equal(entries.get("c04").status, "caution");
   assert.equal(errors.length, 1);
   assert.match(errors[0], /duplicate id \^c01/);
+});
+
+const alphaClaims = parseRegister("- ✅ ok ^c01\n- ⚠️ thin ^c02\n- ❌ wrong ^c03").entries;
+const loadAlpha = (ref) => (ref.caseId === "alpha-case" && ref.register === "claims" ? alphaClaims.get(ref.id) ?? null : null);
+
+test("G2 flags numbers and quotation marks outside references on linted lines only", () => {
+  const draft = [
+    "---",
+    "doc_type: script",
+    "---",
+    "On slide: ![[alpha-case claims#^c01]] in 2021",
+    "Say: about 40% of users",
+    "Notes: timing 60s is fine here",
+    '> "a retyped quote"',
+    "```",
+    "Say: 99 inside a fence",
+    "```",
+  ].join("\n");
+  const g2 = lintDraft(draft, loadAlpha).filter((finding) => finding.gate === "G2");
+  assert.deepEqual(g2.map((finding) => finding.line), [5, 7]);
+  assert.ok(g2.every((finding) => finding.level === "error"));
+});
+
+test("G3 enforces evidence status by placement", () => {
+  const draft = [
+    "On slide: ![[alpha-case claims#^c02]]",
+    "Notes: ![[alpha-case claims#^c02]]",
+    "Say: ![[alpha-case claims#^c03]]",
+    "Say: ![[alpha-case claims#^c99]]",
+    "Say: ![[alpha-case beats#^b01]]",
+  ].join("\n");
+  const g3 = lintDraft(draft, loadAlpha).filter((finding) => finding.gate === "G3");
+  assert.deepEqual(g3.map((finding) => [finding.line, finding.level]), [[1, "error"], [2, "warn"], [3, "error"], [4, "error"]]);
 });
