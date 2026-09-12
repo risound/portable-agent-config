@@ -9,6 +9,7 @@ import { splitFrontmatter } from "../skills/portfolio-presentation/scripts/lib/f
 import { findRefs, stripRefs } from "../skills/portfolio-presentation/scripts/lib/refs.mjs";
 import { parseRegister } from "../skills/portfolio-presentation/scripts/lib/registers.mjs";
 import { lintDraft } from "../skills/portfolio-presentation/scripts/lib/lint.mjs";
+import { parseDoNotSay, scanDoNotSay } from "../skills/portfolio-presentation/scripts/lib/dns.mjs";
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SKILL = path.join(REPO_ROOT, "skills", "portfolio-presentation");
@@ -113,4 +114,13 @@ test("G3 enforces evidence status by placement", () => {
   ].join("\n");
   const g3 = lintDraft(draft, loadAlpha).filter((finding) => finding.gate === "G3");
   assert.deepEqual(g3.map((finding) => [finding.line, finding.level]), [[1, "error"], [2, "warn"], [3, "error"], [4, "error"]]);
+});
+
+test("G4 matches literals and regexes, ignoring the draft's own list section", () => {
+  const rules = parseDoNotSay(["# Landmines", "## Do not say", "- strategic pivot · drew a correction", "- /\\bshipped\\b/g", "## Other", "- not a rule"].join("\n"));
+  assert.equal(rules.length, 2);
+  const draft = ["Say: it was a Strategic Pivot", "Say: the feature shipped", "Say: it was shipping soon", "## Do not say", "- strategic pivot"].join("\n");
+  const findings = scanDoNotSay(draft, rules);
+  assert.deepEqual(findings.map((finding) => finding.line), [1, 2]);
+  assert.ok(findings.every((finding) => finding.gate === "G4" && finding.level === "error"));
 });
