@@ -10,6 +10,7 @@ import { findRefs, stripRefs } from "../skills/portfolio-presentation/scripts/li
 import { parseRegister } from "../skills/portfolio-presentation/scripts/lib/registers.mjs";
 import { lintDraft } from "../skills/portfolio-presentation/scripts/lib/lint.mjs";
 import { parseDoNotSay, scanDoNotSay } from "../skills/portfolio-presentation/scripts/lib/dns.mjs";
+import { allocateSeconds, checkBudget, checkCoverage, parseCallSheet, parseSkeleton } from "../skills/portfolio-presentation/scripts/lib/structure.mjs";
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SKILL = path.join(REPO_ROOT, "skills", "portfolio-presentation");
@@ -123,4 +124,35 @@ test("G4 matches literals and regexes, ignoring the draft's own list section", (
   const findings = scanDoNotSay(draft, rules);
   assert.deepEqual(findings.map((finding) => finding.line), [1, 2]);
   assert.ok(findings.every((finding) => finding.gate === "G4" && finding.level === "error"));
+});
+
+const skeletonText = [
+  "### S01 · Title · 10s",
+  "### S02 · The belief · 600s · asks: problem · case: alpha-case",
+  "### S03 · The method · 420s · asks: approach, collaboration · case: alpha-case",
+  "### S04 · Second case · 780s · asks: impact · case: beta-case",
+].join("\n");
+
+test("parseSkeleton reads ids, titles, seconds, asks, and case", () => {
+  const slides = parseSkeleton(skeletonText);
+  assert.equal(slides.length, 4);
+  assert.deepEqual(slides[2], { id: "S03", title: "The method", seconds: 420, asks: ["approach", "collaboration"], caseId: "alpha-case", line: 3 });
+  assert.equal(slides[0].caseId, null);
+  assert.deepEqual(slides[0].asks, []);
+});
+
+test("G1 coverage reports uncovered asks and ignores skipped call sheet cases", () => {
+  assert.deepEqual(checkCoverage(["problem", "constraints"], parseSkeleton(skeletonText)).map((finding) => finding.message), ["named ask not covered: constraints"]);
+  const sheet = parseCallSheet(["### alpha-case · lead · asks: problem", "### beta-case · skip · asks: impact"].join("\n"));
+  assert.equal(sheet.length, 2);
+  assert.deepEqual(checkCoverage(["problem", "impact"], sheet).map((finding) => finding.message), ["named ask not covered: impact"]);
+});
+
+test("G1 budget requires 90 seconds of buffer per case", () => {
+  const plan = { length_min: 35, front_matter_min: 3, cases: ["alpha-case", "beta-case"] };
+  assert.equal(allocateSeconds(plan), 960);
+  assert.deepEqual(checkBudget(plan, parseSkeleton(skeletonText)).map((finding) => finding.message), ["alpha-case: -60s buffer, minimum 90s (allocated 960s, scripted 1020s)"]);
+  const stray = parseSkeleton("### S09 · Stray · 30s · case: gamma-case");
+  assert.match(checkBudget(plan, stray).at(-1).message, /S09 names case gamma-case/);
+  assert.throws(() => allocateSeconds({ length_min: 35, front_matter_min: 3, cases: [] }), /no cases/);
 });
