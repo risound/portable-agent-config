@@ -1,5 +1,6 @@
 const SLIDE = /^### (S\d{2,3}) · (.+?) · (\d+)s((?: · [a-z_]+: [a-z0-9, -]+)*)\s*$/;
-const CASE = /^### ([a-z0-9]+(?:-[a-z0-9]+)*) · (lead|hold|skip)((?: · [a-z_]+: [a-z0-9, -]+)*)\s*$/;
+const SLIDE_LIKE = /^###\s+S\d/;
+const CASE =/^### ([a-z0-9]+(?:-[a-z0-9]+)*) · (lead|hold|skip)((?: · [a-z_]+: [a-z0-9, -]+)*)\s*$/;
 
 export const MIN_BUFFER_SECONDS = 90;
 
@@ -43,6 +44,9 @@ export function checkCoverage(namedAsks, units) {
 
 export function allocateSeconds({ length_min, front_matter_min, cases }) {
   if (!cases?.length) throw new Error("plan lists no cases");
+  for (const [key, value] of Object.entries({ length_min, front_matter_min })) {
+    if (typeof value !== "number" || !Number.isFinite(value)) throw new Error(`plan ${key} must be a number, got ${value}`);
+  }
   return Math.floor(((length_min - front_matter_min) * 60) / cases.length);
 }
 
@@ -62,4 +66,12 @@ export function checkBudget(plan, slides) {
     }
   }
   return findings;
+}
+
+export function findMalformedSlideHeaders(text) {
+  return text.split(/\r?\n/).flatMap((line, index) =>
+    SLIDE_LIKE.test(line) && !SLIDE.test(line)
+      ? [{ gate: "G1", level: "error", line: index + 1, message: `slide header does not match "### S<nn> · <title> · <seconds>s · asks: <ids> · case: <case-id>": ${line.trim()}` }]
+      : [],
+  );
 }

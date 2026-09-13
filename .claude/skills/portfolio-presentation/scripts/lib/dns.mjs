@@ -30,8 +30,12 @@ export function parseDoNotSay(text) {
       const regex = phrase.match(/^\/(.+)\/([a-z]*)$/);
       if (regex) {
         const flags = regex[2].replace(/g/g, "");
-        const pattern = new RegExp(regex[1], flags.includes("i") ? flags : `${flags}i`);
-        rules.push({ label: phrase, test: (line) => pattern.test(line) });
+        try {
+          const pattern = new RegExp(regex[1], flags.includes("i") ? flags : `${flags}i`);
+          rules.push({ label: phrase, test: (line) => pattern.test(line) });
+        } catch (error) {
+          rules.push({ label: phrase, error: error.message, test: () => false });
+        }
       } else {
         const needle = phrase.toLowerCase();
         rules.push({ label: phrase, test: (line) => line.toLowerCase().includes(needle) });
@@ -54,4 +58,10 @@ export function scanDoNotSay(text, rules) {
     }
   }
   return findings;
+}
+
+export function invalidDoNotSay(rules) {
+  return rules
+    .filter((rule) => rule.error)
+    .map((rule) => ({ gate: "G4", level: "error", line: 0, message: `invalid do-not-say pattern ${rule.label}: ${rule.error}` }));
 }

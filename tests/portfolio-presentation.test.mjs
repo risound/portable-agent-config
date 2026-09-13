@@ -9,8 +9,8 @@ import { splitFrontmatter } from "../skills/portfolio-presentation/scripts/lib/f
 import { findRefs, stripRefs } from "../skills/portfolio-presentation/scripts/lib/refs.mjs";
 import { parseRegister } from "../skills/portfolio-presentation/scripts/lib/registers.mjs";
 import { lintDraft } from "../skills/portfolio-presentation/scripts/lib/lint.mjs";
-import { parseDoNotSay, scanDoNotSay } from "../skills/portfolio-presentation/scripts/lib/dns.mjs";
-import { allocateSeconds, checkBudget, checkCoverage, parseCallSheet, parseSkeleton } from "../skills/portfolio-presentation/scripts/lib/structure.mjs";
+import { invalidDoNotSay, parseDoNotSay, scanDoNotSay } from "../skills/portfolio-presentation/scripts/lib/dns.mjs";
+import { allocateSeconds, checkBudget, checkCoverage, findMalformedSlideHeaders, parseCallSheet, parseSkeleton } from "../skills/portfolio-presentation/scripts/lib/structure.mjs";
 import { transcriptHealth } from "../skills/portfolio-presentation/scripts/lib/repetition.mjs";
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -247,5 +247,79 @@ test("SKILL.md links only files that exist and carries no em dashes", () => {
   for (const relative of linked) assert.ok(existsSync(path.join(SKILL, relative)), `missing ${relative}`);
   for (const name of ["SKILL.md", "references/signals-and-rules.md", "references/qa-gates.md", "references/evaluation-loop.md"]) {
     assert.equal(readFileSync(path.join(SKILL, name), "utf8").includes(String.fromCharCode(0x2014)), false, `${name} contains an em dash`);
+  }
+});
+
+test("frontmatter accepts block list items at column zero", () => {
+  const { data } = splitFrontmatter(["---", "named_asks:", "- problem", "- impact", "cases:", "- alpha-case", "mode: presentation", "---"].join("\n"));
+  assert.deepEqual(data, { named_asks: ["problem", "impact"], cases: ["alpha-case"], mode: "presentation" });
+});
+
+test("allocateSeconds rejects missing or non-numeric plan lengths", () => {
+  assert.throws(() => allocateSeconds({ length_min: 20, cases: ["alpha-case"] }), /front_matter_min/);
+  assert.throws(() => allocateSeconds({ length_min: "twenty", front_matter_min: 2, cases: ["alpha-case"] }), /length_min/);
+});
+
+test("G1 flags slide headers that do not match the slide format", () => {
+  const text = ["### S01 · Title · 10s", "### S02 · Method · 600 s · case: alpha-case", "### S03 · Belief · 60s · case: Alpha-Case", "### Notes heading"].join("\n");
+  assert.deepEqual(findMalformedSlideHeaders(text).map((finding) => [finding.gate, finding.level, finding.line]), [["G1", "error", 2], ["G1", "error", 3]]);
+});
+
+test("G4 reports an invalid regex entry instead of crashing", () => {
+  const rules = parseDoNotSay("## Do not say\n- /foo(/ · typo\n- strategic pivot");
+  assert.equal(rules.length, 2);
+  assert.deepEqual(scanDoNotSay("Say: foo( strategic pivot", rules).map((finding) => finding.message), ["do-not-say: strategic pivot"]);
+  const invalid = invalidDoNotSay(rules);
+  assert.deepEqual(invalid.map((finding) => [finding.gate, finding.level]), [["G4", "error"]]);
+  assert.match(invalid[0].message, /invalid do-not-say pattern \/foo\(\//);
+});
+
+test("kit gates CLI turns malformed plans into usage errors, not crashes", () => {
+  const root = mkdtempSync(path.join(tmpdir(), "presentation-kit-"));
+  try {
+    const kit = path.join(root, "kit");
+    mkdirSync(kit);
+    const draft = path.join(root, "skeleton.md");
+    writeFileSync(draft, "### S01 · Belief · 600s · asks: problem · case: alpha-case\n");
+    const plan = path.join(root, "plan.md");
+    const run = (frontmatter) => {
+      writeFileSync(plan, `---\nmode: presentation\nnamed_asks: [problem]\n${frontmatter}\n---\n`);
+      return spawnSync(process.execPath, [KIT, "gates", "--kit", kit, "--plan", plan, "--draft", draft], { encoding: "utf8" });
+    };
+
+    const missingLength = run("length_min: 20\ncases: [alpha-case]");
+    assert.equal(missingLength.status, 2, missingLength.stdout);
+    assert.match(missingLength.stderr, /front_matter_min/);
+    assert.doesNotMatch(missingLength.stderr, /\n\s+at /);
+
+    const noCases = run("length_min: 20\nfront_matter_min: 2\ncases: []");
+    assert.equal(noCases.status, 2, noCases.stdout);
+    assert.match(noCases.stderr, /no cases/);
+    assert.doesNotMatch(noCases.stderr, /\n\s+at /);
+
+    const scalarCase = run("length_min: 20\nfront_matter_min: 2\ncases: alpha-case");
+    assert.equal(scalarCase.status, 0, scalarCase.stdout + scalarCase.stderr);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("kit gates CLI reports malformed slide headers and invalid patterns as findings", () => {
+  const root = mkdtempSync(path.join(tmpdir(), "presentation-kit-"));
+  try {
+    const kit = path.join(root, "kit");
+    mkdirSync(kit);
+    writeFileSync(path.join(kit, "do-not-say.md"), "## Do not say\n- /foo(/\n");
+    const plan = path.join(root, "plan.md");
+    writeFileSync(plan, "---\nmode: presentation\nlength_min: 20\nfront_matter_min: 2\nnamed_asks: [problem]\ncases: [alpha-case]\n---\n");
+    const draft = path.join(root, "skeleton.md");
+    writeFileSync(draft, "### S01 · Belief · 600s · asks: problem · case: alpha-case\n### S02 · Extra · 1000 s · case: alpha-case\n");
+    const result = spawnSync(process.execPath, [KIT, "gates", "--kit", kit, "--plan", plan, "--draft", draft, "--json"], { encoding: "utf8" });
+    assert.equal(result.status, 1, result.stderr);
+    const messages = JSON.parse(result.stdout).map((finding) => `${finding.gate} ${finding.message}`);
+    assert.ok(messages.some((message) => /^G1 slide header does not match/.test(message)), messages.join("\n"));
+    assert.ok(messages.some((message) => /^G4 invalid do-not-say pattern/.test(message)), messages.join("\n"));
+  } finally {
+    rmSync(root, { recursive: true, force: true });
   }
 });

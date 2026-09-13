@@ -4,8 +4,8 @@ import path from "node:path";
 import { splitFrontmatter } from "./lib/frontmatter.mjs";
 import { createEntryLoader } from "./lib/registers.mjs";
 import { lintDraft } from "./lib/lint.mjs";
-import { parseDoNotSay, scanDoNotSay } from "./lib/dns.mjs";
-import { checkBudget, checkCoverage, parseCallSheet, parseSkeleton } from "./lib/structure.mjs";
+import { invalidDoNotSay, parseDoNotSay, scanDoNotSay } from "./lib/dns.mjs";
+import { allocateSeconds, checkBudget, checkCoverage, findMalformedSlideHeaders, parseCallSheet, parseSkeleton } from "./lib/structure.mjs";
 import { transcriptHealth } from "./lib/repetition.mjs";
 
 const USAGE = [
@@ -29,7 +29,7 @@ function parseArgs(argv) {
   return args;
 }
 
-const asList = (value) => (value === undefined ? [] : [].concat(value));
+const asList = (value) => (value === undefined || value === null ? [] : [].concat(value));
 
 function fail(message) {
   console.error(message);
@@ -42,25 +42,34 @@ function gates(args) {
   if (typeof args.plan !== "string") fail("Pass --plan <plan.md>.");
   const plan = splitFrontmatter(readFileSync(args.plan, "utf8")).data;
   if (!["presentation", "conversation"].includes(plan.mode)) fail(`Plan mode must be presentation or conversation, got ${plan.mode}.`);
+  plan.cases = asList(plan.cases);
+  plan.named_asks = asList(plan.named_asks);
+  if (plan.mode === "presentation") allocateSeconds(plan);
   const drafts = asList(args.draft);
   if (!drafts.length) fail("Pass at least one --draft <file>.");
 
   const dnsSources = [
     path.join(kit, "do-not-say.md"),
     args.plan,
-    ...(plan.cases ?? []).map((id) => path.join(kit, "cases", id, `${id} do-not-say.md`)),
+    ...plan.cases.map((id) => path.join(kit, "cases", id, `${id} do-not-say.md`)),
     ...asList(args.dns),
   ].filter((file) => existsSync(file));
-  const rules = dnsSources.flatMap((file) => parseDoNotSay(readFileSync(file, "utf8")));
+  const rules = [];
+  const findings = [];
+  for (const file of dnsSources) {
+    const parsed = parseDoNotSay(readFileSync(file, "utf8"));
+    rules.push(...parsed);
+    findings.push(...invalidDoNotSay(parsed).map((finding) => ({ ...finding, file })));
+  }
   const loadEntry = createEntryLoader(kit);
 
-  const findings = [];
   const units = [];
   for (const file of drafts) {
     const text = readFileSync(file, "utf8");
     const tag = (finding) => ({ ...finding, file });
     findings.push(...lintDraft(text, loadEntry).map(tag), ...scanDoNotSay(text, rules).map(tag));
     if (plan.mode === "presentation") {
+      findings.push(...findMalformedSlideHeaders(text).map(tag));
       const slides = parseSkeleton(text);
       if (slides.length) {
         units.push(...slides);
@@ -98,4 +107,8 @@ const args = parseArgs(process.argv.slice(2));
 const commands = { gates, "transcript-health": health };
 const run = commands[args._[0]];
 if (!run) fail(USAGE);
-run(args);
+try {
+  run(args);
+} catch (error) {
+  fail(`kit.mjs: ${error.message}`);
+}

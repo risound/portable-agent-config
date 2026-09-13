@@ -11,7 +11,7 @@ export function parseYamlSubset(lines) {
   let listKey = null;
   for (const raw of lines) {
     if (!raw.trim() || raw.trim().startsWith("#")) continue;
-    const item = raw.match(/^\s+-\s+(.*)$/);
+    const item = raw.match(/^\s*-\s+(.*)$/);
     if (item && listKey) {
       if (data[listKey] === null) data[listKey] = [];
       data[listKey].push(unquote(item[1].trim()));
