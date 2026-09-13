@@ -7,7 +7,7 @@ import test from "node:test";
 import { fileURLToPath } from "node:url";
 import { splitFrontmatter } from "../skills/portfolio-presentation/scripts/lib/frontmatter.mjs";
 import { findRefs, stripRefs } from "../skills/portfolio-presentation/scripts/lib/refs.mjs";
-import { parseRegister } from "../skills/portfolio-presentation/scripts/lib/registers.mjs";
+import { missingCaseModules, parseRegister } from "../skills/portfolio-presentation/scripts/lib/registers.mjs";
 import { lintDraft } from "../skills/portfolio-presentation/scripts/lib/lint.mjs";
 import { invalidDoNotSay, parseDoNotSay, scanDoNotSay } from "../skills/portfolio-presentation/scripts/lib/dns.mjs";
 import { allocateSeconds, checkBudget, checkCoverage, findMalformedSlideHeaders, parseCallSheet, parseSkeleton } from "../skills/portfolio-presentation/scripts/lib/structure.mjs";
@@ -319,6 +319,37 @@ test("kit gates CLI reports malformed slide headers and invalid patterns as find
     const messages = JSON.parse(result.stdout).map((finding) => `${finding.gate} ${finding.message}`);
     assert.ok(messages.some((message) => /^G1 slide header does not match/.test(message)), messages.join("\n"));
     assert.ok(messages.some((message) => /^G4 invalid do-not-say pattern/.test(message)), messages.join("\n"));
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("missingCaseModules warns for each plan case with no module folder", () => {
+  const root = mkdtempSync(path.join(tmpdir(), "presentation-kit-"));
+  try {
+    mkdirSync(path.join(root, "cases", "alpha-case"), { recursive: true });
+    const findings = missingCaseModules(root, ["alpha-case", "beta-case"]);
+    assert.deepEqual(findings.map((finding) => [finding.gate, finding.level]), [["G3", "warn"]]);
+    assert.match(findings[0].message, /beta-case has no module/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("kit gates CLI warns on missing case modules and reports references checked", () => {
+  const root = mkdtempSync(path.join(tmpdir(), "presentation-kit-"));
+  try {
+    const kit = path.join(root, "kit");
+    mkdirSync(path.join(kit, "cases", "alpha-case"), { recursive: true });
+    writeFileSync(path.join(kit, "cases", "alpha-case", "alpha-case claims.md"), "- ✅ verified claim ^c01\n");
+    const plan = path.join(root, "plan.md");
+    writeFileSync(plan, "---\nmode: conversation\nnamed_asks: [problem]\ncases: [alpha-case, beta-case]\n---\n");
+    const sheet = path.join(root, "call-sheet.md");
+    writeFileSync(sheet, "### alpha-case · lead · asks: problem\nSay: ![[alpha-case claims#^c01]]\n### beta-case · hold · asks: problem\nSay: blocked, no module yet\n");
+    const result = spawnSync(process.execPath, [KIT, "gates", "--kit", kit, "--plan", plan, "--draft", sheet], { encoding: "utf8" });
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.match(result.stdout, /G3 warn .*beta-case has no module/);
+    assert.match(result.stdout, /0 error\(s\), 1 warning\(s\), 1 reference\(s\) checked/);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

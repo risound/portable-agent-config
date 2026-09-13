@@ -2,7 +2,8 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { splitFrontmatter } from "./lib/frontmatter.mjs";
-import { createEntryLoader } from "./lib/registers.mjs";
+import { createEntryLoader, missingCaseModules } from "./lib/registers.mjs";
+import { findRefs } from "./lib/refs.mjs";
 import { lintDraft } from "./lib/lint.mjs";
 import { invalidDoNotSay, parseDoNotSay, scanDoNotSay } from "./lib/dns.mjs";
 import { allocateSeconds, checkBudget, checkCoverage, findMalformedSlideHeaders, parseCallSheet, parseSkeleton } from "./lib/structure.mjs";
@@ -62,10 +63,13 @@ function gates(args) {
     findings.push(...invalidDoNotSay(parsed).map((finding) => ({ ...finding, file })));
   }
   const loadEntry = createEntryLoader(kit);
+  findings.push(...missingCaseModules(kit, plan.cases).map((finding) => ({ ...finding, file: args.plan })));
 
   const units = [];
+  let referencesChecked = 0;
   for (const file of drafts) {
     const text = readFileSync(file, "utf8");
+    referencesChecked += findRefs(text).filter((ref) => ref.register !== "beats").length;
     const tag = (finding) => ({ ...finding, file });
     findings.push(...lintDraft(text, loadEntry).map(tag), ...scanDoNotSay(text, rules).map(tag));
     if (plan.mode === "presentation") {
@@ -89,7 +93,7 @@ function gates(args) {
     console.log(JSON.stringify(findings, null, 2));
   } else {
     for (const finding of findings) console.log(`${finding.gate} ${finding.level} ${finding.file}:${finding.line} ${finding.message}`);
-    console.log(`${errors} error(s), ${findings.length - errors} warning(s)`);
+    console.log(`${errors} error(s), ${findings.length - errors} warning(s), ${referencesChecked} reference(s) checked`);
   }
   process.exit(errors ? 1 : 0);
 }

@@ -40,3 +40,9 @@ export function createEntryLoader(kitRoot) {
     return cache.get(key)?.get(ref.id) ?? null;
   };
 }
+
+export function missingCaseModules(kitRoot, cases) {
+  return cases
+    .filter((caseId) => !existsSync(path.join(kitRoot, "cases", caseId)))
+    .map((caseId) => ({ gate: "G3", level: "warn", line: 0, message: `case ${caseId} has no module in the kit; references to it cannot be checked` }));
+}
