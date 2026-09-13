@@ -167,3 +167,48 @@ test("transcript health passes clean text and flags whisper repetition loops", (
   assert.equal(result.healthy, false);
   assert.deepEqual(transcriptHealth(""), { rep12: 0, healthy: true });
 });
+
+const KIT = path.join(SKILL, "scripts", "kit.mjs");
+
+test("kit gates CLI exits 1 on blocking findings and 0 when clean", () => {
+  const root = mkdtempSync(path.join(tmpdir(), "presentation-kit-"));
+  try {
+    const kit = path.join(root, "kit");
+    mkdirSync(path.join(kit, "cases", "alpha-case"), { recursive: true });
+    writeFileSync(path.join(kit, "do-not-say.md"), "## Do not say\n- participant real name\n");
+    writeFileSync(path.join(kit, "cases", "alpha-case", "alpha-case claims.md"), "- ✅ verified claim ^c01\n");
+    const plan = path.join(root, "plan.md");
+    writeFileSync(plan, "---\nmode: presentation\nlength_min: 20\nfront_matter_min: 2\nnamed_asks: [problem]\ncases: [alpha-case]\n---\n## Do not say\n- strategic pivot\n");
+
+    const clean = path.join(root, "skeleton.md");
+    writeFileSync(clean, "### S01 · Belief · 600s · asks: problem · case: alpha-case\nOn slide: ![[alpha-case claims#^c01]]\n");
+    const ok = spawnSync(process.execPath, [KIT, "gates", "--kit", kit, "--plan", plan, "--draft", clean], { encoding: "utf8" });
+    assert.equal(ok.status, 0, ok.stdout + ok.stderr);
+    assert.match(ok.stdout, /0 error\(s\), 0 warning\(s\)/);
+
+    const dirty = path.join(root, "dirty.md");
+    writeFileSync(dirty, "### S01 · Belief · 600s · asks: problem · case: alpha-case\nSay: it was a strategic pivot with 40% growth\n");
+    const bad = spawnSync(process.execPath, [KIT, "gates", "--kit", kit, "--plan", plan, "--draft", dirty, "--json"], { encoding: "utf8" });
+    assert.equal(bad.status, 1, bad.stderr);
+    assert.deepEqual(JSON.parse(bad.stdout).map((finding) => finding.gate).sort(), ["G2", "G4"]);
+
+    const usage = spawnSync(process.execPath, [KIT, "gates", "--plan", plan, "--draft", clean], { encoding: "utf8", env: { ...process.env, PRESENTATION_KIT_ROOT: "" } });
+    assert.equal(usage.status, 2);
+    assert.match(usage.stderr, /PRESENTATION_KIT_ROOT/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("kit transcript-health CLI reports loops with exit 1", () => {
+  const root = mkdtempSync(path.join(tmpdir(), "presentation-kit-"));
+  try {
+    const file = path.join(root, "recap.txt");
+    writeFileSync(file, Array(20).fill("and then we went back to the same screen again and again").join(" "));
+    const result = spawnSync(process.execPath, [KIT, "transcript-health", file], { encoding: "utf8" });
+    assert.equal(result.status, 1);
+    assert.match(result.stdout, /LOOP SUSPECTED rep12=\d+ threshold=5/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
