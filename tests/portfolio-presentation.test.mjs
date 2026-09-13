@@ -212,3 +212,30 @@ test("kit transcript-health CLI reports loops with exit 1", () => {
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+const TEMPLATES = path.join(SKILL, "assets", "templates");
+const fillTemplate = (name) => readFileSync(path.join(TEMPLATES, name), "utf8").replaceAll("<case-id>", "alpha-case").replaceAll("<ask>", "problem");
+
+test("templates stay parseable by the gates", () => {
+  const plan = splitFrontmatter(fillTemplate("plan.md")).data;
+  assert.equal(plan.doc_type, "round-plan");
+  assert.equal(plan.mode, "presentation");
+  assert.equal(plan.length_min, 35);
+  assert.deepEqual(plan.named_asks, ["problem"]);
+  assert.deepEqual(plan.cases, ["alpha-case"]);
+  assert.ok(parseDoNotSay(fillTemplate("plan.md")).length >= 1);
+
+  assert.equal(parseSkeleton(fillTemplate("skeleton.md")).filter((slide) => slide.caseId === "alpha-case").length, 1);
+
+  const scriptRefs = findRefs(fillTemplate("script.md"));
+  assert.ok(scriptRefs.some((ref) => ref.register === "claims"));
+  assert.ok(scriptRefs.some((ref) => ref.register === "quotes"));
+
+  assert.equal(parseCallSheet(fillTemplate("call-sheet.md")).length, 1);
+  assert.ok(parseDoNotSay(fillTemplate("call-sheet.md")).length >= 1);
+
+  for (const name of ["intake-block.md", "debrief.md"]) assert.ok(fillTemplate(name).length > 0);
+  for (const name of ["intake-block.md", "plan.md", "skeleton.md", "script.md", "call-sheet.md", "debrief.md"]) {
+    assert.equal(fillTemplate(name).includes(String.fromCharCode(0x2014)), false, `${name} contains an em dash`);
+  }
+});
