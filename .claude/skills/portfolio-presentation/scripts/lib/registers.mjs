@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
+import { findRefs } from "./refs.mjs";
 
 const ENTRY = /^- (✅|⚠️?|❌) (.+?) \^([a-z]\d{2,3})\s*$/u;
 
@@ -45,4 +46,16 @@ export function missingCaseModules(kitRoot, cases) {
   return cases
     .filter((caseId) => !existsSync(path.join(kitRoot, "cases", caseId)))
     .map((caseId) => ({ gate: "G3", level: "warn", line: 0, message: `case ${caseId} has no module in the kit; references to it cannot be checked` }));
+}
+
+export function hasCaseModule(kitRoot, caseId) {
+  return existsSync(path.join(kitRoot, "cases", caseId));
+}
+
+export function checkBeatRefs(text, kitRoot) {
+  return text.split(/\r?\n/).flatMap((line, index) =>
+    findRefs(line)
+      .filter((ref) => ref.register === "beats" && !hasCaseModule(kitRoot, ref.caseId))
+      .map((ref) => ({ gate: "G3", level: "warn", line: index + 1, message: `beat reference to ${ref.caseId}, which has no module; the beat cannot be checked` })),
+  );
 }

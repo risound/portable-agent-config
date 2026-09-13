@@ -65,3 +65,13 @@ export function invalidDoNotSay(rules) {
     .filter((rule) => rule.error)
     .map((rule) => ({ gate: "G4", level: "error", line: 0, message: `invalid do-not-say pattern ${rule.label}: ${rule.error}` }));
 }
+
+export const MAX_PHRASE_WORDS = 8;
+
+export function suspectDoNotSay(rules) {
+  return rules
+    .filter((rule) => !rule.error && !/^\/.+\/[a-z]*$/.test(rule.label))
+    .map((rule) => ({ rule, words: rule.label.split(/\s+/).filter(Boolean).length }))
+    .filter(({ words }) => words > MAX_PHRASE_WORDS)
+    .map(({ rule, words }) => ({ gate: "G4", level: "warn", line: 0, message: `do-not-say entry looks like prose, not a phrase (${words} words): every bullet under ## Do not say is a ban, so move explanations after " · " or outside the list: ${rule.label}` }));
+}
