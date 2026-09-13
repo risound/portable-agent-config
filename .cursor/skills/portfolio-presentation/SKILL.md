@@ -43,7 +43,7 @@ Landmine entries quote the original wording verbatim, including wording that lat
 
 1. Read `rules.md` in the kit. For each rule whose `when` matches a signal, apply its `then` and record it under "Rules fired".
 2. Record every choice no rule covers in the decision log, with reasoning and whether it rests on a recap-tier signal.
-3. Select cases from the case library by question tags, audience fit, and version durations. If the library has no module for a case you would choose, say so; never write case claims from memory.
+3. Select cases from the case library by question tags, audience fit, and version durations. If the library has no module for a case you would choose, say so; never write case claims from memory. A case with no module may still appear as a **placeholder**, but only for work the candidate named in this round's sources, and in a call sheet it carries `Trigger:` and `Notes:` lines only, never `Say:` lines, until its module exists. G3 warns on every placeholder and rejects a `Say:` line under one.
 4. Write predictions: five to seven likeliest questions (draw on `question-bank.md` in the kit), the case probed hardest, the named ask drawing the most time, and the weak spot likeliest to be found.
 5. Collect company landmines under "Do not say".
 
@@ -57,6 +57,9 @@ Write the plan from `assets/templates/plan.md` as `YYYY-MM-DD - plan.md`.
 - **Conversation:** a call sheet from `assets/templates/call-sheet.md`.
 
 Keep the line prefixes and header formats exactly as the templates show; the gates parse them.
+
+- **A named ask covered outside a case** (for example, bringing questions for the interviewer) is declared on the section heading that covers it: `## Your questions · asks: candidate-questions`. G1 counts it.
+- **Every bullet under `## Do not say` is a ban.** Put the reason after ` · ` on the same line, and put any other explanation in prose outside the list.
 
 **Gate:** run the QA gates.
 
