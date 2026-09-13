@@ -11,6 +11,7 @@ import { parseRegister } from "../skills/portfolio-presentation/scripts/lib/regi
 import { lintDraft } from "../skills/portfolio-presentation/scripts/lib/lint.mjs";
 import { parseDoNotSay, scanDoNotSay } from "../skills/portfolio-presentation/scripts/lib/dns.mjs";
 import { allocateSeconds, checkBudget, checkCoverage, parseCallSheet, parseSkeleton } from "../skills/portfolio-presentation/scripts/lib/structure.mjs";
+import { transcriptHealth } from "../skills/portfolio-presentation/scripts/lib/repetition.mjs";
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SKILL = path.join(REPO_ROOT, "skills", "portfolio-presentation");
@@ -155,4 +156,14 @@ test("G1 budget requires 90 seconds of buffer per case", () => {
   const stray = parseSkeleton("### S09 · Stray · 30s · case: gamma-case");
   assert.match(checkBudget(plan, stray).at(-1).message, /S09 names case gamma-case/);
   assert.throws(() => allocateSeconds({ length_min: 35, front_matter_min: 3, cases: [] }), /no cases/);
+});
+
+test("transcript health passes clean text and flags whisper repetition loops", () => {
+  const clean = Array.from({ length: 200 }, (_, index) => `word${index}`).join(" ");
+  assert.deepEqual(transcriptHealth(`[00:00:01.000 --> 00:00:04.000] ${clean}`), { rep12: 1, healthy: true });
+  const loop = `${clean} ${Array(20).fill("and then we went back to the same screen again and again").join(" ")}`;
+  const result = transcriptHealth(loop);
+  assert.ok(result.rep12 >= 13, `rep12 was ${result.rep12}`);
+  assert.equal(result.healthy, false);
+  assert.deepEqual(transcriptHealth(""), { rep12: 0, healthy: true });
 });
