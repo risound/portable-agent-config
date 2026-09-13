@@ -42,4 +42,6 @@ Checked at debrief. Do not edit after the round.
 4. Weak spot likeliest to be found: <gap>
 
 ## Do not say
+Every bullet in this section is a ban. Give the reason after ` · ` on the same line; put anything else in prose, like this line, not in a bullet.
+
 - <phrase or /regex/> · <why, with source>

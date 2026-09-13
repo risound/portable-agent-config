@@ -28,6 +28,8 @@ A clean `kit.mjs gates` run is necessary, not sufficient. These gaps are known a
 3. **G4 literal entries match as substrings,** including inside longer words. Keep literal entries to distinctive phrases, and use a `/\bword\b/` regex entry for short or common words.
 4. **G1's budget covers case slides only.** Front matter slides are not checked against `front_matter_min`. Sum them by hand when a skeleton's front matter grows beyond a title and one framing slide.
 5. **Extracted deck text is not a draft.** It has no `On slide:` or `Say:` prefixes and no unresolved references, so G2 and G3 find nothing, and G1 reports missing slides whatever the deck says. On deck text, trust only G4, and check figures and quotations by reading, as G5 and G7 describe.
+6. **Beat ids are not resolved.** G3 warns when a beat reference points at a case with no module, but it does not confirm that the beat id exists inside a module, because the beats register format is not yet defined. Check beat ids by reading until it is.
+7. **The prose-ban warning is a heuristic.** G4 warns on literal do-not-say entries longer than eight words, which catches most explanations written as bullets but not short ones. Every bullet under `## Do not say` is still a ban.
 
 ## How the gates fail
 
@@ -36,6 +38,9 @@ A clean `kit.mjs gates` run is necessary, not sufficient. These gaps are known a
 - A slide heading that starts `### S` followed by a digit but does not match the slide header format is a G1 error naming the line, so its seconds are never silently dropped from the budget.
 - A do-not-say entry written as `/pattern/` that is not a valid regular expression is a G4 error naming the entry. The rest of the list still runs.
 - A plan case with no folder under `cases/` is a G3 warning. Its references cannot be checked, so a clean run on those cases proves nothing about their claims. The text summary ends with the number of claim and quote references checked; zero means G2 and G3 had nothing to verify.
+- In conversation mode, a `Say:` line under a case header whose case has no module is a G3 error. Placeholder cases carry `Trigger:` and `Notes:` lines only.
+- A beat reference to a case with no module is a G3 warning naming the line.
+- A literal do-not-say entry longer than eight words is a G4 warning: it is probably an explanation written as a bullet, and it would be enforced as a ban.
 - G4 scans draft lines outside the draft's own `## Do not say` section. Intake and plan records are not drafts and may quote banned wording as evidence.
 - Plan lists may be written inline (`cases: [alpha-case]`), as block lists at any indentation, or as a single value (`cases: alpha-case`).
 
@@ -55,6 +60,8 @@ Status symbols: ✅ verified, ⚠️ caution, ❌ banned.
 
 **Call sheet case header:** `### <case-id> · lead · asks: problem`
 
-**Do-not-say list:** items under `## Do not say`. Text after ` · ` is an explanation. `/pattern/` is a case-insensitive regex; anything else is a case-insensitive literal. Sources, in order: the kit's `do-not-say.md`, the plan, each selected case's `<case-id> do-not-say.md`, and any `--dns` file.
+**Ask heading:** any other `##` or `###` heading ending ` · asks: <ask ids>`, such as `## Your questions · asks: candidate-questions`. It covers those asks for G1 in either mode.
+
+**Do-not-say list:** items under `## Do not say`. Every item is a ban. Text after ` · ` is an explanation. `/pattern/` is a case-insensitive regex; anything else is a case-insensitive literal. Sources, in order: the kit's `do-not-say.md`, the plan, each selected case's `<case-id> do-not-say.md`, and any `--dns` file.
 
 **Plan frontmatter keys read by the gates:** `mode`, `length_min`, `front_matter_min`, `named_asks`, `cases`.

@@ -2,11 +2,11 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { splitFrontmatter } from "./lib/frontmatter.mjs";
-import { createEntryLoader, missingCaseModules } from "./lib/registers.mjs";
+import { checkBeatRefs, createEntryLoader, hasCaseModule, missingCaseModules } from "./lib/registers.mjs";
 import { findRefs } from "./lib/refs.mjs";
 import { lintDraft } from "./lib/lint.mjs";
-import { invalidDoNotSay, parseDoNotSay, scanDoNotSay } from "./lib/dns.mjs";
-import { allocateSeconds, checkBudget, checkCoverage, findMalformedSlideHeaders, parseCallSheet, parseSkeleton } from "./lib/structure.mjs";
+import { invalidDoNotSay, parseDoNotSay, scanDoNotSay, suspectDoNotSay } from "./lib/dns.mjs";
+import { allocateSeconds, checkBudget, checkCoverage, findMalformedSlideHeaders, findPlaceholderSayLines, parseAskHeadings, parseCallSheet, parseSkeleton } from "./lib/structure.mjs";
 import { transcriptHealth } from "./lib/repetition.mjs";
 
 const USAGE = [
@@ -60,30 +60,34 @@ function gates(args) {
   for (const file of dnsSources) {
     const parsed = parseDoNotSay(readFileSync(file, "utf8"));
     rules.push(...parsed);
-    findings.push(...invalidDoNotSay(parsed).map((finding) => ({ ...finding, file })));
+    findings.push(...[...invalidDoNotSay(parsed), ...suspectDoNotSay(parsed)].map((finding) => ({ ...finding, file })));
   }
   const loadEntry = createEntryLoader(kit);
   findings.push(...missingCaseModules(kit, plan.cases).map((finding) => ({ ...finding, file: args.plan })));
 
   const units = [];
+  let slideCount = 0;
   let referencesChecked = 0;
   for (const file of drafts) {
     const text = readFileSync(file, "utf8");
     referencesChecked += findRefs(text).filter((ref) => ref.register !== "beats").length;
     const tag = (finding) => ({ ...finding, file });
-    findings.push(...lintDraft(text, loadEntry).map(tag), ...scanDoNotSay(text, rules).map(tag));
+    findings.push(...lintDraft(text, loadEntry).map(tag), ...scanDoNotSay(text, rules).map(tag), ...checkBeatRefs(text, kit).map(tag));
+    units.push(...parseAskHeadings(text));
     if (plan.mode === "presentation") {
       findings.push(...findMalformedSlideHeaders(text).map(tag));
       const slides = parseSkeleton(text);
       if (slides.length) {
+        slideCount += slides.length;
         units.push(...slides);
         findings.push(...checkBudget(plan, slides).map(tag));
       }
     } else {
       units.push(...parseCallSheet(text));
+      findings.push(...findPlaceholderSayLines(text, (caseId) => hasCaseModule(kit, caseId)).map(tag));
     }
   }
-  if (plan.mode === "presentation" && !units.length) {
+  if (plan.mode === "presentation" && !slideCount) {
     findings.push({ gate: "G1", level: "error", line: 0, file: args.plan, message: "no skeleton slides found among drafts" });
   }
   findings.push(...checkCoverage(plan.named_asks, units).map((finding) => ({ ...finding, file: args.plan })));

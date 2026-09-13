@@ -1,5 +1,6 @@
 const SLIDE = /^### (S\d{2,3}) · (.+?) · (\d+)s((?: · [a-z_]+: [a-z0-9, -]+)*)\s*$/;
 const SLIDE_LIKE = /^###\s+S\d/;
+const ASK_HEADING = /^#{2,3} .+? · asks: ([a-z0-9, -]+)\s*$/;
 const CASE =/^### ([a-z0-9]+(?:-[a-z0-9]+)*) · (lead|hold|skip)((?: · [a-z_]+: [a-z0-9, -]+)*)\s*$/;
 
 export const MIN_BUFFER_SECONDS = 90;
@@ -74,4 +75,28 @@ export function findMalformedSlideHeaders(text) {
       ? [{ gate: "G1", level: "error", line: index + 1, message: `slide header does not match "### S<nn> · <title> · <seconds>s · asks: <ids> · case: <case-id>": ${line.trim()}` }]
       : [],
   );
+}
+
+export function parseAskHeadings(text) {
+  return text.split(/\r?\n/).flatMap((line, index) => {
+    if (SLIDE.test(line) || CASE.test(line)) return [];
+    const match = line.match(ASK_HEADING);
+    return match ? [{ caseId: null, asks: toList(match[1]), line: index + 1 }] : [];
+  });
+}
+
+export function findPlaceholderSayLines(text, hasModule) {
+  const findings = [];
+  let placeholder = null;
+  text.split(/\r?\n/).forEach((line, index) => {
+    const caseHeader = line.match(CASE);
+    if (caseHeader) {
+      placeholder = hasModule(caseHeader[1]) ? null : caseHeader[1];
+    } else if (/^#{1,3}\s/.test(line)) {
+      placeholder = null;
+    } else if (placeholder && /^\s*Say:/.test(line)) {
+      findings.push({ gate: "G3", level: "error", line: index + 1, message: `Say line under ${placeholder}, which has no module; a placeholder case carries Trigger and Notes lines only` });
+    }
+  });
+  return findings;
 }

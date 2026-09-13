@@ -7,10 +7,10 @@ import test from "node:test";
 import { fileURLToPath } from "node:url";
 import { splitFrontmatter } from "../skills/portfolio-presentation/scripts/lib/frontmatter.mjs";
 import { findRefs, stripRefs } from "../skills/portfolio-presentation/scripts/lib/refs.mjs";
-import { missingCaseModules, parseRegister } from "../skills/portfolio-presentation/scripts/lib/registers.mjs";
+import { checkBeatRefs, missingCaseModules, parseRegister } from "../skills/portfolio-presentation/scripts/lib/registers.mjs";
 import { lintDraft } from "../skills/portfolio-presentation/scripts/lib/lint.mjs";
-import { invalidDoNotSay, parseDoNotSay, scanDoNotSay } from "../skills/portfolio-presentation/scripts/lib/dns.mjs";
-import { allocateSeconds, checkBudget, checkCoverage, findMalformedSlideHeaders, parseCallSheet, parseSkeleton } from "../skills/portfolio-presentation/scripts/lib/structure.mjs";
+import { invalidDoNotSay, parseDoNotSay, scanDoNotSay, suspectDoNotSay } from "../skills/portfolio-presentation/scripts/lib/dns.mjs";
+import { allocateSeconds, checkBudget, checkCoverage, findMalformedSlideHeaders, findPlaceholderSayLines, parseAskHeadings, parseCallSheet, parseSkeleton } from "../skills/portfolio-presentation/scripts/lib/structure.mjs";
 import { transcriptHealth } from "../skills/portfolio-presentation/scripts/lib/repetition.mjs";
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -345,11 +345,75 @@ test("kit gates CLI warns on missing case modules and reports references checked
     const plan = path.join(root, "plan.md");
     writeFileSync(plan, "---\nmode: conversation\nnamed_asks: [problem]\ncases: [alpha-case, beta-case]\n---\n");
     const sheet = path.join(root, "call-sheet.md");
-    writeFileSync(sheet, "### alpha-case · lead · asks: problem\nSay: ![[alpha-case claims#^c01]]\n### beta-case · hold · asks: problem\nSay: blocked, no module yet\n");
+    writeFileSync(sheet, "### alpha-case · lead · asks: problem\nSay: ![[alpha-case claims#^c01]]\n### beta-case · hold · asks: problem\nNotes: blocked, no module yet\n");
     const result = spawnSync(process.execPath, [KIT, "gates", "--kit", kit, "--plan", plan, "--draft", sheet], { encoding: "utf8" });
     assert.equal(result.status, 0, result.stdout + result.stderr);
     assert.match(result.stdout, /G3 warn .*beta-case has no module/);
     assert.match(result.stdout, /0 error\(s\), 1 warning\(s\), 1 reference\(s\) checked/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("parseAskHeadings counts section headings that declare asks, excluding case and slide headers", () => {
+  const text = ["## Your questions · asks: candidate-questions", "### alpha-case · lead · asks: problem", "### S01 · Belief · 60s · asks: impact · case: alpha-case", "## Known gaps"].join("\n");
+  const units = parseAskHeadings(text);
+  assert.deepEqual(units.map((unit) => [unit.asks, unit.line]), [[["candidate-questions"], 1]]);
+  assert.deepEqual(checkCoverage(["problem", "candidate-questions"], [...parseCallSheet(text), ...units]), []);
+});
+
+test("findPlaceholderSayLines rejects Say lines under a case with no module", () => {
+  const text = ["### alpha-case · lead · asks: problem", "Say: ![[alpha-case claims#^c01]]", "### beta-case · hold · asks: problem", "Trigger: they ask about scale", "Say: blocked, no module yet", "## Your questions · asks: candidate-questions", "Say: not under a case"].join("\n");
+  const findings = findPlaceholderSayLines(text, (caseId) => caseId === "alpha-case");
+  assert.deepEqual(findings.map((finding) => [finding.gate, finding.level, finding.line]), [["G3", "error", 5]]);
+  assert.match(findings[0].message, /beta-case, which has no module/);
+});
+
+test("checkBeatRefs warns on beat references to cases with no module", () => {
+  const root = mkdtempSync(path.join(tmpdir(), "presentation-kit-"));
+  try {
+    mkdirSync(path.join(root, "cases", "alpha-case"), { recursive: true });
+    const text = ["Beat: [[alpha-case beats#^b01]]", "Notes: see [[beta-case beats#^b02]] and ![[beta-case claims#^c01]]"].join("\n");
+    const findings = checkBeatRefs(text, root);
+    assert.deepEqual(findings.map((finding) => [finding.gate, finding.level, finding.line]), [["G3", "warn", 2]]);
+    assert.match(findings[0].message, /beat reference to beta-case, which has no module/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("suspectDoNotSay warns on literal entries that read as prose", () => {
+  const rules = parseDoNotSay(["## Do not say", "- much richer opportunity · disclosed preference", "- /\\bpivot\\w*/", "- The kit's global list also applies and the gates load it automatically"].join("\n"));
+  const findings = suspectDoNotSay(rules);
+  assert.deepEqual(findings.map((finding) => [finding.gate, finding.level]), [["G4", "warn"]]);
+  assert.match(findings[0].message, /looks like prose/);
+});
+
+test("kit gates CLI applies ask headings, placeholder cases, beat refs, and prose bans together", () => {
+  const root = mkdtempSync(path.join(tmpdir(), "presentation-kit-"));
+  try {
+    const kit = path.join(root, "kit");
+    mkdirSync(path.join(kit, "cases", "alpha-case"), { recursive: true });
+    writeFileSync(path.join(kit, "cases", "alpha-case", "alpha-case claims.md"), "- ✅ verified claim ^c01\n");
+    const plan = path.join(root, "plan.md");
+    writeFileSync(plan, "---\nmode: conversation\nnamed_asks: [problem, candidate-questions]\ncases: [alpha-case, beta-case]\n---\n## Do not say\n- strategic pivot\n- The kit's global list also applies and the gates load it automatically\n");
+    const sheet = path.join(root, "call-sheet.md");
+    writeFileSync(sheet, [
+      "### alpha-case · lead · asks: problem",
+      "Say: ![[alpha-case claims#^c01]]",
+      "### beta-case · hold · asks: problem",
+      "Notes: pairs with [[beta-case beats#^b01]]",
+      "Say: blocked, no module yet",
+      "## Your questions · asks: candidate-questions",
+      "Ask: what would you lean on this person for first",
+    ].join("\n") + "\n");
+    const result = spawnSync(process.execPath, [KIT, "gates", "--kit", kit, "--plan", plan, "--draft", sheet, "--json"], { encoding: "utf8" });
+    assert.equal(result.status, 1, result.stderr);
+    const messages = JSON.parse(result.stdout).map((finding) => `${finding.gate} ${finding.level} ${finding.message}`);
+    assert.ok(messages.some((message) => /^G3 error .*beta-case, which has no module/.test(message)), messages.join("\n"));
+    assert.ok(messages.some((message) => /^G3 warn beat reference to beta-case/.test(message)), messages.join("\n"));
+    assert.ok(messages.some((message) => /^G4 warn .*looks like prose/.test(message)), messages.join("\n"));
+    assert.ok(!messages.some((message) => /not covered/.test(message)), messages.join("\n"));
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
