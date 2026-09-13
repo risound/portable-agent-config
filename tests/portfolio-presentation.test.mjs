@@ -239,3 +239,13 @@ test("templates stay parseable by the gates", () => {
     assert.equal(fillTemplate(name).includes(String.fromCharCode(0x2014)), false, `${name} contains an em dash`);
   }
 });
+
+test("SKILL.md links only files that exist and carries no em dashes", () => {
+  const skillText = readFileSync(path.join(SKILL, "SKILL.md"), "utf8");
+  const linked = [...skillText.matchAll(/`((?:references|assets\/templates|scripts)\/[^`]+?\.(?:md|mjs))`/g)].map((match) => match[1]);
+  assert.ok(linked.length >= 9, `only ${linked.length} linked files`);
+  for (const relative of linked) assert.ok(existsSync(path.join(SKILL, relative)), `missing ${relative}`);
+  for (const name of ["SKILL.md", "references/signals-and-rules.md", "references/qa-gates.md", "references/evaluation-loop.md"]) {
+    assert.equal(readFileSync(path.join(SKILL, name), "utf8").includes(String.fromCharCode(0x2014)), false, `${name} contains an em dash`);
+  }
+});
