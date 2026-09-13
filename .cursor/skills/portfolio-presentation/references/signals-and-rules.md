@@ -21,7 +21,7 @@ Each entry records the quote, its source (transcript timestamp, email, the candi
 - **recap:** the candidate's own account of what was said.
 - **inference:** a conclusion drawn from one or more sourced entries but not stated in any of them. Cite the entries it rests on.
 
-When the source is a machine transcript and the passage was corrected or rated below high confidence by the transcriber, add `ASR-uncertain` after the tier. Public context adds a retrieval date. Rules may fire on recap or inference entries; the plan labels any choice resting on one.
+When the source is a machine transcript, add `ASR-uncertain` after the tier only if the transcriber rated the passage, or a correction to it, below high confidence (medium or low). A correction the transcriber rated high confidence counts as the source's wording and takes no flag, so the flag stays rare enough to mean something. Public context adds a retrieval date. Rules may fire on recap or inference entries; the plan labels any choice resting on one.
 
 Describe what the other person did, at the strength they did it. A recruiter who accepts a framing and restates it differently has reframed it, not corrected it; record which.
 
