@@ -74,7 +74,7 @@ Exit code 1 means a blocking finding: return to Phase 3. Then run agent gates G5
 
 ## Phase 4: Build
 
-Presentation mode hands the skeleton to the deck pipeline. Before round day, extract the final deck's text and rerun G2 to G4 on it, because hand edits skip every earlier gate. Conversation mode has no build step.
+Presentation mode hands the skeleton to the deck pipeline. Before round day, extract the final deck's text and check it again, because hand edits skip every earlier gate. The mechanical gates were built for drafts, so on extracted deck text only G4 is meaningful: pass the text file to `kit.mjs gates` as a `--draft` and read only its G4 findings. Then read every slide and note for numbers, percentages, and quotations, and compare each against its case register as G5 and G7 would, because G2 needs line prefixes and G3 needs unresolved references, and a finished deck has neither. Conversation mode has no build step.
 
 **Gate:** the user rehearses.
 
