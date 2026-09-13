@@ -35,6 +35,8 @@ A clean `kit.mjs gates` run is necessary, not sufficient. These gaps are known a
 - **Exit 2** means the run could not check anything: a missing kit, plan, or draft; a plan mode other than presentation or conversation; a presentation plan with no cases or a missing or non-numeric `length_min` or `front_matter_min`; or any unreadable file. The message names the problem. Fix it and rerun; never treat exit 2 as a pass or a gate result.
 - A slide heading that starts `### S` followed by a digit but does not match the slide header format is a G1 error naming the line, so its seconds are never silently dropped from the budget.
 - A do-not-say entry written as `/pattern/` that is not a valid regular expression is a G4 error naming the entry. The rest of the list still runs.
+- A plan case with no folder under `cases/` is a G3 warning. Its references cannot be checked, so a clean run on those cases proves nothing about their claims. The text summary ends with the number of claim and quote references checked; zero means G2 and G3 had nothing to verify.
+- G4 scans draft lines outside the draft's own `## Do not say` section. Intake and plan records are not drafts and may quote banned wording as evidence.
 - Plan lists may be written inline (`cases: [alpha-case]`), as block lists at any indentation, or as a single value (`cases: alpha-case`).
 
 ## Formats the gates parse

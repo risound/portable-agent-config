@@ -10,12 +10,22 @@
 | Role reality | level, scope, management, band | posting says individual contributor; recruiter describes direct reports |
 | Team problem | the team's open question, in its own words | how newer, less specialised users adopt the product |
 | Operating context | how research is valued and used | the company ships quickly and relies on research selectively |
-| Landmines | corrections received, disclosures made | a framing the recruiter corrected; a preference the candidate disclosed |
+| Landmines | corrections or reframes received, disclosures made | a framing the recruiter corrected or softly reframed; a preference the candidate disclosed |
 | Public context | company thesis in its own words, launches, news, posting changes | the About page thesis; a retitled posting |
 
 ## Entry format
 
-Each entry records the quote, its source (transcript timestamp, email, the candidate's recap, or URL), and a confidence tier: **verbatim** or **recap**. Public context adds a retrieval date. Rules may fire on recap entries; the plan labels any choice resting on one.
+Each entry records the quote, its source (transcript timestamp, email, the candidate's recap, or URL), and a confidence tier:
+
+- **verbatim:** the words appear in the source.
+- **recap:** the candidate's own account of what was said.
+- **inference:** a conclusion drawn from one or more sourced entries but not stated in any of them. Cite the entries it rests on.
+
+When the source is a machine transcript and the passage was corrected or rated below high confidence by the transcriber, add `ASR-uncertain` after the tier. Public context adds a retrieval date. Rules may fire on recap or inference entries; the plan labels any choice resting on one.
+
+Describe what the other person did, at the strength they did it. A recruiter who accepts a framing and restates it differently has reframed it, not corrected it; record which.
+
+Landmine entries quote the original wording verbatim, including wording that becomes a do-not-say entry. The ban applies to draft lines that get said or shown, not to the intake or plan record.
 
 ## Gaps and public context
 

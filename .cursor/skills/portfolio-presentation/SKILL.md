@@ -21,6 +21,8 @@ Per-round files live beside the round note in the application tracker's `rounds/
 - **Confidential content stays in the kit and the tracker.** Never copy company names, participant quotes, figures, or case evidence into this skill's repository.
 - **Write tracker and kit notes through the host's note tool** when one is available (for an Obsidian vault, its MCP write tools), so the editor's cache stays current. The bundled scripts only read.
 - **Reference, never retype.** Drafts cite claims, quotes, and beats by case reference. A number or quotation typed outside a reference fails gate G2.
+- **Round facts come only from this round's sources.** The date, names, panel, and format come from the round note, the recruiter's messages, and transcripts of this process. Kit files (question bank, rule origins, earlier plans) describe past rounds; never take a current round's facts from them. If a fact is missing, leave it blank and add a recruiter question.
+- **Label inferences.** A conclusion drawn from the evidence rather than stated in it carries the **inference** tier, never verbatim or recap. See `references/signals-and-rules.md`.
 - **Insider framing beats public framing.** Log any conflict as a landmine.
 - **Outcomes are recorded and excluded from scoring.** An advance or a rejection never promotes, holds, or retires a rule.
 - **Every approved change reruns the evals** before it is saved. See `references/evaluation-loop.md`.
@@ -32,6 +34,8 @@ Per-round files live beside the round note in the application tracker's `rounds/
 2. Append the signal block from `assets/templates/intake-block.md`. Classify every piece of recruiter information into the eight signal types in `references/signals-and-rules.md`, with source and confidence tier.
 3. Dispatch the `research-scout` agent for public context: the company's own statement of its thesis, launches and news from the last six months, and a fresh copy of the job posting. Every entry carries a URL and retrieval date.
 4. Turn every missing Format or Audience signal into a question for the recruiter.
+
+Landmine entries quote the original wording verbatim, including wording that later goes on a do-not-say list: the landmine is evidence, and paraphrase makes it uncheckable. Do-not-say bans apply to what gets said or shown, meaning skeleton, script, and call sheet lines outside their own `## Do not say` section, which is exactly what G4 scans. Intake and plan records may name the banned wording.
 
 **Gate:** the user confirms the signals.
 
