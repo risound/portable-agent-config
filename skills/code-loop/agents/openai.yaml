@@ -1,0 +1,6 @@
+interface:
+  display_name: "Code Loop"
+  short_description: "Required reviewed workflow for every code change"
+  default_prompt: "Use $code-loop to implement this code change through the full review loop."
+policy:
+  allow_implicit_invocation: true
